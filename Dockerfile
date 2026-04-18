@@ -1,39 +1,20 @@
-# Dockerfile
-
-# Stage 1: Build
-FROM node:14 AS build
+# Use a more modern Node.js version (optional but recommended)
+FROM node:18-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package configuration
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application
-COPY . .
-
-# Build the application (if needed)
-RUN npm run build
-
-
-# Stage 2: Production
-FROM node:14 AS production
-
-# Set the working directory
-WORKDIR /app
-
-# Copy only the built assets from the build stage
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package*.json ./
-
-# Install only production dependencies
+# Install production dependencies
 RUN npm install --only=production
 
-# Expose the port the app runs on
+# Copy the rest of your application code
+COPY . .
+
+# Cloud Run expects the app to listen on the PORT environment variable (default 8080)
 EXPOSE 8080
 
-# Command to run the application
-CMD [ "node", "dist/server.js" ]
+# Command to run your application using ES modules
+CMD [ "node", "server.mjs" ]
