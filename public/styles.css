@@ -29,12 +29,17 @@
 html,
 body {
   margin: 0;
-  min-height: 100%;
+  height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: "Inter", sans-serif;
   color: var(--text);
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(105, 211, 255, 0.18), transparent 22%),
     radial-gradient(circle at top right, rgba(131, 150, 255, 0.14), transparent 24%),
@@ -66,12 +71,14 @@ textarea {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
 }
 
 .sidebar {
+  height: 100vh;
+  overflow-y: auto;
   background:
     radial-gradient(circle at top left, rgba(105, 211, 255, 0.16), transparent 26%),
     linear-gradient(180deg, var(--sidebar) 0%, var(--sidebar-dark) 100%);
@@ -93,13 +100,16 @@ textarea {
 .brand-mark {
   width: 56px;
   height: 56px;
+  flex: 0 0 56px;
   display: grid;
   place-items: center;
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(235, 244, 255, 0.92) 100%);
   color: var(--sidebar);
   font-size: 1.8rem;
-  box-shadow: inset 0 0 0 1px rgba(20, 82, 162, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(20, 82, 162, 0.08),
+    0 10px 24px rgba(7, 34, 82, 0.18);
 }
 
 .brand-title {
@@ -187,6 +197,9 @@ textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .topbar {
@@ -206,10 +219,36 @@ textarea {
   line-height: 1;
 }
 
+.brand-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.brand-headline-primary {
+  background: linear-gradient(135deg, #0d63d6 0%, #29a4ff 55%, #7f8dff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-headline-secondary {
+  color: #8a95ab;
+  font-weight: 700;
+}
+
 .topbar p {
   margin: 10px 0 0;
   color: var(--muted);
   font-size: 1.08rem;
+}
+
+.topbar-subtitle {
+  margin: 12px 0 0;
+  color: #7c8aa3;
+  font-size: 1.02rem;
+  font-weight: 500;
 }
 
 .profile-block {
@@ -672,6 +711,8 @@ textarea {
   display: grid;
   gap: 18px;
   align-content: start;
+  grid-template-rows: auto auto auto 1fr auto;
+  min-height: 100%;
 }
 
 .scout-tags {
@@ -697,6 +738,7 @@ textarea {
 
 .scout-action {
   justify-self: start;
+  align-self: end;
   border: 0;
   border-radius: 999px;
   padding: 10px 16px;
@@ -1045,9 +1087,17 @@ button[type="submit"]:disabled {
   padding: 10px 14px;
   border-radius: 14px;
   background: linear-gradient(135deg, #1559b5 0%, #1280d8 100%);
-  color: #fff;
+  color: #ffffff;
   font-size: 0.92rem;
   font-weight: 700;
+}
+
+.event-link:link,
+.event-link:visited,
+.event-link:hover,
+.event-link:active,
+.result-card .event-link {
+  color: #ffffff;
 }
 
 .event-link[href=""] {
@@ -1084,6 +1134,36 @@ button[type="submit"]:disabled {
   box-shadow: 0 0 0 6px rgba(63, 140, 255, 0.14);
 }
 
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 30;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #1658b4 0%, #0f67c1 54%, #23a3ff 100%);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 16px 28px rgba(15, 101, 187, 0.24);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 34px rgba(15, 101, 187, 0.28);
+}
+
 pre {
   white-space: pre-wrap;
   word-break: break-word;
@@ -1107,10 +1187,19 @@ pre {
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 1fr;
+    height: auto;
   }
 
   .sidebar {
+    height: auto;
+    overflow: visible;
     padding-bottom: 20px;
+  }
+
+  .main-shell,
+  body {
+    height: auto;
+    overflow: auto;
   }
 
   .topbar,
@@ -1143,5 +1232,10 @@ pre {
 
   .activity-item time {
     grid-column: 2;
+  }
+
+  .back-to-top {
+    right: 16px;
+    bottom: 16px;
   }
 }
