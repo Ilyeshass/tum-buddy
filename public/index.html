@@ -14,14 +14,14 @@
   </head>
   <body>
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
+        <aside class="sidebar">
+          <div class="brand">
           <div class="brand-mark" aria-hidden="true">TB</div>
-          <div>
-            <div class="brand-title">TUM Buddy</div>
-            <div class="brand-subtitle">Academic Assistant</div>
+            <div>
+              <div class="brand-title">TUM Buddy</div>
+              <div class="brand-subtitle">Academic Assistant</div>
+            </div>
           </div>
-        </div>
 
         <nav class="nav-section">
           <p class="nav-label">Main Menu</p>
@@ -46,12 +46,6 @@
           <a class="nav-item" href="#transport-detector">
             Transport Detector
           </a>
-          <a class="nav-item" href="#research-radar">
-            Research Radar
-          </a>
-          <a class="nav-item" href="#career-pulse">
-            Career Pulse
-          </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -63,14 +57,17 @@
       <div class="main-shell">
         <header class="topbar" id="dashboard">
           <div>
-            <h1>Academic Chief of Staff</h1>
-            <p>Welcome back. Your student event finder is ready to scout the next opportunity.</p>
+            <h1 class="brand-headline">
+              <span class="brand-headline-primary">TUM Buddy</span>
+              <span class="brand-headline-secondary">made for study</span>
+            </h1>
+            <p class="topbar-subtitle">Your academic AI agent guider</p>
           </div>
 
           <div class="profile-block">
             <div class="profile-text">
               <strong>Ilyes Hassayoun</strong>
-              <span>M.Sc. Informatics</span>
+              <span>B.Sc. Informatics</span>
             </div>
             <div class="avatar">IH</div>
           </div>
@@ -103,6 +100,75 @@
               <a class="deadline-button" href="https://www.moodle.tum.de/" target="_blank" rel="noreferrer">
                 View Details
               </a>
+            </article>
+          </section>
+
+          <section class="scout-grid">
+            <article class="panel scout-panel" id="weekly-scout">
+              <div class="panel-header">
+                <h2>Weekly Scout</h2>
+                <p>Broad discovery for hackathons, student meetups, and high-energy AI events.</p>
+              </div>
+              <div class="scout-tags">
+                <span>Hackathons</span>
+                <span>Networking</span>
+                <span>AI Events</span>
+              </div>
+              <p class="scout-copy">
+                Best when you want quick weekly inspiration and events that feel student-friendly.
+              </p>
+              <button
+                class="scout-action"
+                type="button"
+                data-target="event-search"
+                data-prefill="hackathons, networking, AI events"
+              >
+                Use Weekly Scout
+              </button>
+            </article>
+
+            <article class="panel scout-panel" id="subject-guide-shortcut">
+              <div class="panel-header">
+                <h2>Subject Guide</h2>
+                <p>Academic tips and course guidance for the exact subject you are studying.</p>
+              </div>
+              <div class="scout-tags">
+                <span>Study Tips</span>
+                <span>Exam Prep</span>
+                <span>Course Help</span>
+              </div>
+              <p class="scout-copy">
+                Use this when you want practical help for a subject inside your degree program.
+              </p>
+              <button
+                class="scout-action"
+                type="button"
+                data-target="subject-guide"
+              >
+                Open Subject Guide
+              </button>
+            </article>
+
+            <article class="panel scout-panel" id="transport-shortcut">
+              <div class="panel-header">
+                <h2>Transport Detector</h2>
+                <p>Autonomous monitoring for MVG constraints, delays, and travel issues around Munich.</p>
+              </div>
+              <div class="scout-tags">
+                <span>MVG</span>
+                <span>Transit Alerts</span>
+                <span>Munich</span>
+              </div>
+              <p class="scout-copy">
+                Ideal when you want to quickly jump to live transport status before heading out.
+              </p>
+              <button
+                class="scout-action"
+                type="button"
+                data-target="transport-detector"
+              >
+                Open Transport Detector
+              </button>
             </article>
           </section>
 
@@ -170,7 +236,7 @@
             <div class="panel-header split">
               <div>
                 <h2>Transport Detector</h2>
-                <p>Autonomous MVG monitoring powered by your Dify transport agent. No input required.</p>
+                <p>Effortless MVG monitoring — fully autonomous with your Dify transport agent.</p>
               </div>
               <div class="transport-controls">
                 <div class="status-pill neutral" id="transport-status-pill">Checking soon</div>
@@ -244,74 +310,6 @@
                 </p>
               </div>
             </div>
-          </section>
-
-          <section class="scout-grid">
-            <article class="panel scout-panel" id="weekly-scout">
-              <div class="panel-header">
-                <h2>Weekly Scout</h2>
-                <p>Broad discovery for hackathons, student meetups, and high-energy AI events.</p>
-              </div>
-              <div class="scout-tags">
-                <span>Hackathons</span>
-                <span>Networking</span>
-                <span>AI Events</span>
-              </div>
-              <p class="scout-copy">
-                Best when you want quick weekly inspiration and events that feel student-friendly.
-              </p>
-              <button
-                class="scout-action"
-                type="button"
-                data-prefill="hackathons, networking, AI events"
-              >
-                Use Weekly Scout
-              </button>
-            </article>
-
-            <article class="panel scout-panel" id="research-radar">
-              <div class="panel-header">
-                <h2>Research Radar</h2>
-                <p>Academic and innovation-focused events around emerging technical fields.</p>
-              </div>
-              <div class="scout-tags">
-                <span>Machine Learning</span>
-                <span>Data Science</span>
-                <span>Robotics</span>
-              </div>
-              <p class="scout-copy">
-                Use this when you want conferences, labs, workshops, and serious technical talks.
-              </p>
-              <button
-                class="scout-action"
-                type="button"
-                data-prefill="machine learning, data science, robotics"
-              >
-                Use Research Radar
-              </button>
-            </article>
-
-            <article class="panel scout-panel" id="career-pulse">
-              <div class="panel-header">
-                <h2>Career Pulse</h2>
-                <p>Industry-facing events that help with internships, career visibility, and practical skills.</p>
-              </div>
-              <div class="scout-tags">
-                <span>Cybersecurity</span>
-                <span>Software Engineering</span>
-                <span>Cloud</span>
-              </div>
-              <p class="scout-copy">
-                Ideal for employer-facing events, recruiting touchpoints, and applied engineering communities.
-              </p>
-              <button
-                class="scout-action"
-                type="button"
-                data-prefill="cybersecurity, software engineering, cloud"
-              >
-                Use Career Pulse
-              </button>
-            </article>
           </section>
 
           <section class="panel search-panel" id="event-search">
@@ -399,6 +397,10 @@
         </main>
       </div>
     </div>
+
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">
+      ↑ Top
+    </button>
 
     <script type="module" src="/app.js"></script>
   </body>
