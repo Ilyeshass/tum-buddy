@@ -9,6 +9,12 @@ const subjectForm = document.getElementById("subject-form");
 const subjectSubmitButton = document.getElementById("subject-submit-button");
 const subjectStatusText = document.getElementById("subject-status-text");
 const subjectResultCard = document.getElementById("subject-result-card");
+const careerForm = document.getElementById("career-form");
+const careerSubmitButton = document.getElementById("career-submit-button");
+const careerCvFileInput = document.getElementById("careerCvFile");
+const careerCvAnalyzeButton = document.getElementById("career-cv-analyze-button");
+const careerStatusText = document.getElementById("career-status-text");
+const careerResultCard = document.getElementById("career-result-card");
 const transportStatusPill = document.getElementById("transport-status-pill");
 const transportRefreshButton = document.getElementById("transport-refresh");
 const transportSummaryMain = document.getElementById("transport-summary-main");
@@ -48,6 +54,11 @@ for (const button of scoutButtons) {
 
     if (targetId === "transport-detector") {
       transportRefreshButton?.focus();
+      return;
+    }
+
+    if (targetId === "career-scout") {
+      document.getElementById("careerDegree")?.focus();
     }
   });
 }
@@ -82,7 +93,9 @@ backToTopButton?.addEventListener("click", () => {
 
 mainShell?.addEventListener("scroll", toggleBackToTopButton, { passive: true });
 window.addEventListener("scroll", toggleBackToTopButton, { passive: true });
+window.addEventListener("hashchange", syncHashSection);
 toggleBackToTopButton();
+syncHashSection();
 
 refreshTransportDetector(false);
 setInterval(() => {
@@ -186,6 +199,107 @@ subjectForm?.addEventListener("submit", async event => {
   }
 });
 
+careerForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const payload = {
+    degree: careerForm.degree.value,
+    skills: careerForm.skills.value,
+    interests: careerForm.interests.value,
+    preferredTypes: careerForm.preferredTypes.value,
+    preferredLocations: careerForm.preferredLocations.value,
+    preferredLanguages: careerForm.preferredLanguages.value,
+    summary: careerForm.summary.value,
+    limit: careerForm.limit.value
+  };
+
+  setCareerLoading(true);
+  setCareerResult('<div class="status-badge">Scanning job sources</div>');
+  careerStatusText.textContent = "Matching your profile...";
+
+  try {
+    const response = await fetch("/api/career-scout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const details = typeof data.details === "string"
+        ? data.details
+        : JSON.stringify(data.details || {}, null, 2);
+
+      throw new Error(`${data.error || "Career Scout failed"}${details ? `\n\n${details}` : ""}`);
+    }
+
+    setCareerResult(renderCareerResults(data));
+    careerStatusText.textContent = `${data.count || 0} matching jobs found.`;
+  } catch (error) {
+    setCareerResult(`
+      <h3>Something went wrong</h3>
+      <pre>${escapeHtml(error.message || "Unknown error")}</pre>
+    `);
+    careerStatusText.textContent = "The request failed. Try again in a moment.";
+  } finally {
+    setCareerLoading(false);
+  }
+});
+
+careerCvAnalyzeButton?.addEventListener("click", async () => {
+  const file = careerCvFileInput?.files?.[0];
+
+  if (!file) {
+    careerStatusText.textContent = "Choose a PDF CV first.";
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".pdf")) {
+    careerStatusText.textContent = "Only PDF CV files are supported.";
+    return;
+  }
+
+  careerCvAnalyzeButton.disabled = true;
+  careerCvAnalyzeButton.textContent = "Analyzing CV...";
+  careerStatusText.textContent = "Extracting profile from your CV...";
+  setCareerResult('<div class="status-badge">Analyzing CV</div>');
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/cv/analyze", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const details = typeof data.details === "string"
+        ? data.details
+        : JSON.stringify(data.details || {}, null, 2);
+      throw new Error(`${data.error || "CV analysis failed"}${details ? `\n\n${details}` : ""}`);
+    }
+
+    applyCareerAnalysis(data.analysis || {});
+    setCareerResult(renderCareerAnalysis(data.analysis || {}, file.name));
+    careerStatusText.textContent = "CV analyzed and form updated.";
+  } catch (error) {
+    setCareerResult(`
+      <h3>CV analysis failed</h3>
+      <pre>${escapeHtml(error.message || "Unknown error")}</pre>
+    `);
+    careerStatusText.textContent = "Could not extract your CV details.";
+  } finally {
+    careerCvAnalyzeButton.disabled = false;
+    careerCvAnalyzeButton.textContent = "Analyze CV";
+  }
+});
+
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
   submitButton.textContent = isLoading ? "Finding Events..." : "Find Events";
@@ -194,6 +308,21 @@ function setLoading(isLoading) {
 function setSubjectLoading(isLoading) {
   subjectSubmitButton.disabled = isLoading;
   subjectSubmitButton.textContent = isLoading ? "Generating..." : "Get Subject Guide";
+}
+
+function setCareerLoading(isLoading) {
+  careerSubmitButton.disabled = isLoading;
+  careerSubmitButton.textContent = isLoading ? "Scanning Jobs..." : "Find Matching Jobs";
+}
+
+function applyCareerAnalysis(analysis) {
+  careerForm.degree.value = analysis.degree || careerForm.degree.value;
+  careerForm.skills.value = arrayToField(analysis.skills);
+  careerForm.interests.value = arrayToField(analysis.suggested_interests || analysis.domains);
+  careerForm.preferredTypes.value = arrayToField(analysis.preferred_types);
+  careerForm.preferredLocations.value = arrayToField(analysis.preferred_locations);
+  careerForm.preferredLanguages.value = arrayToField(analysis.preferred_languages);
+  careerForm.summary.value = analysis.summary || careerForm.summary.value;
 }
 
 async function refreshTransportDetector(isManual) {
@@ -377,6 +506,28 @@ function scrollSectionIntoView(target) {
   target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function syncHashSection() {
+  const hash = window.location.hash;
+  if (!hash) {
+    return;
+  }
+
+  const target = document.querySelector(hash);
+  if (!target) {
+    return;
+  }
+
+  const behavior = mainShell && window.innerWidth > 900 ? "auto" : "smooth";
+
+  if (mainShell && window.innerWidth > 900) {
+    const top = target.offsetTop - 24;
+    mainShell.scrollTo({ top, behavior });
+    return;
+  }
+
+  target.scrollIntoView({ behavior, block: "start" });
+}
+
 function setResult(html) {
   resultCard.classList.remove("empty");
   resultCard.innerHTML = html;
@@ -385,6 +536,11 @@ function setResult(html) {
 function setSubjectResult(html) {
   subjectResultCard.classList.remove("empty");
   subjectResultCard.innerHTML = html;
+}
+
+function setCareerResult(html) {
+  careerResultCard.classList.remove("empty");
+  careerResultCard.innerHTML = html;
 }
 
 function renderMarkdown(markdown) {
@@ -430,6 +586,127 @@ function renderSubjectGuide(markdown) {
       </section>
       <section class="subject-tips-grid">${tipsHtml}</section>
       ${resourcesHtml}
+    </div>
+  `;
+}
+
+function renderCareerResults(data) {
+  const jobs = Array.isArray(data.topResults) ? data.topResults : [];
+  const digestHtml = data.digest
+    ? `<section class="result-overview"><h3>Career Digest</h3><p>${renderInline(escapeHtml(data.digest)).replace(/\n/g, "<br />")}</p></section>`
+    : "";
+
+  const metaBits = [];
+  if (typeof data.count === "number") {
+    metaBits.push(`${data.count} matches`);
+  }
+  if (Array.isArray(data.sourcesScanned) && data.sourcesScanned.length) {
+    metaBits.push(`Sources: ${data.sourcesScanned.join(", ")}`);
+  }
+
+  const summaryHtml = metaBits.length
+    ? `<section class="result-notes"><h3>Scan Summary</h3><p>${escapeHtml(metaBits.join(" | "))}</p></section>`
+    : "";
+
+  if (!jobs.length) {
+    return `
+      <div class="results-shell">
+        ${digestHtml}
+        <section class="result-notes"><h3>No matches yet</h3><p>No opportunities were returned from the current scan. Try broader skills or interests.</p></section>
+      </div>
+    `;
+  }
+
+  const cardsHtml = jobs.map((job, index) => {
+    const meta = [job.type, job.location, job.source].filter(Boolean)
+      .map(item => `<span>${escapeHtml(item)}</span>`)
+      .join("");
+    const tags = Array.isArray(job.tags)
+      ? job.tags.slice(0, 5).map(tag => `<span>${escapeHtml(tag)}</span>`).join("")
+      : "";
+    const score = Number.isFinite(Number(job.score)) ? Number(job.score).toFixed(2) : null;
+
+    return `
+      <article class="event-card career-card">
+        <div class="event-card-header">
+          <div>
+            <h3>${escapeHtml(job.title || `Job ${index + 1}`)}</h3>
+            ${meta ? `<div class="event-meta">${meta}</div>` : ""}
+          </div>
+          <div class="career-score">
+            <span>Score</span>
+            <strong>${escapeHtml(score || "n/a")}</strong>
+          </div>
+        </div>
+        <div class="event-body">
+          ${job.description ? `
+            <div class="event-field">
+              <strong>Description</strong>
+              <div>${renderInline(escapeHtml(job.description))}</div>
+            </div>
+          ` : ""}
+          ${job.reason ? `
+            <div class="event-field">
+              <strong>Why it matches</strong>
+              <div>${renderInline(escapeHtml(job.reason))}</div>
+            </div>
+          ` : ""}
+          ${tags ? `<div class="career-tags">${tags}</div>` : ""}
+          ${job.url ? `<a class="event-link" href="${escapeHtml(job.url)}" target="_blank" rel="noreferrer">Open Job Link</a>` : ""}
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  return `
+    <div class="results-shell">
+      ${digestHtml}
+      ${summaryHtml}
+      <section class="events-grid">${cardsHtml}</section>
+    </div>
+  `;
+}
+
+function renderCareerAnalysis(analysis, filename) {
+  const summary = analysis.summary ? `
+    <section class="result-overview">
+      <h3>CV Summary</h3>
+      <p>${escapeHtml(analysis.summary)}</p>
+    </section>
+  ` : "";
+
+  const extractedGroups = [
+    { label: "Degree", value: analysis.degree || "Not detected" },
+    { label: "Study Field", value: analysis.study_field || "Not detected" },
+    { label: "Skills", value: arrayToField(analysis.skills) || "None detected" },
+    { label: "Interests", value: arrayToField(analysis.suggested_interests || analysis.domains) || "None detected" },
+    { label: "Preferred Types", value: arrayToField(analysis.preferred_types) || "None detected" },
+    { label: "Locations", value: arrayToField(analysis.preferred_locations) || "None detected" },
+    { label: "Languages", value: arrayToField(analysis.preferred_languages) || "None detected" },
+    { label: "Keywords", value: arrayToField(analysis.keywords) || "None detected" }
+  ].map(item => `
+    <div class="event-field">
+      <strong>${escapeHtml(item.label)}</strong>
+      <div>${escapeHtml(item.value)}</div>
+    </div>
+  `).join("");
+
+  const preview = analysis.text_preview ? `
+    <section class="result-notes">
+      <h3>Text Preview</h3>
+      <p>${escapeHtml(analysis.text_preview).replace(/\n/g, "<br />")}</p>
+    </section>
+  ` : "";
+
+  return `
+    <div class="results-shell">
+      <section class="result-overview">
+        <h3>CV Uploaded</h3>
+        <p>${escapeHtml(filename)} was analyzed successfully. The form has been updated with the extracted profile.</p>
+      </section>
+      ${summary}
+      <section class="event-card career-card">${extractedGroups}</section>
+      ${preview}
     </div>
   `;
 }
@@ -611,6 +888,10 @@ function cleanMarkdownDecorators(text) {
     .replace(/__/g, "")
     .replace(/^[\-\s]+/, "")
     .trim();
+}
+
+function arrayToField(values) {
+  return Array.isArray(values) ? values.filter(Boolean).join(", ") : "";
 }
 
 function renderBlock(block) {
