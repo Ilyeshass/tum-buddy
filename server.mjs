@@ -12,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, "public");
 const execFileAsync = promisify(execFile);
 const bundledPython = "C:\\Users\\firas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
+const configuredPython = cleanString(process.env.PYTHON_PATH);
 
 loadEnv(path.join(__dirname, ".env"));
 
@@ -384,10 +385,7 @@ async function analyzeCvFileBytes(filename, fileBytes) {
     await writeFileAsync(tempFilePath, fileBytes);
 
     const scriptPath = path.join(__dirname, "tools", "extract_cv_profile.py");
-    const { stdout, stderr } = await execFileAsync(bundledPython, [scriptPath, tempFilePath], {
-      windowsHide: true,
-      maxBuffer: 2_000_000
-    });
+    const { stdout, stderr } = await runCvExtractor(scriptPath, tempFilePath);
 
     if (stderr && stderr.trim()) {
       console.error(stderr);
@@ -404,6 +402,50 @@ async function analyzeCvFileBytes(filename, fileBytes) {
       await rm(tempDir, { recursive: true, force: true }).catch(() => {});
     }
   }
+}
+
+async function runCvExtractor(scriptPath, tempFilePath) {
+  const candidates = getPythonCandidates();
+  let lastError = null;
+
+  for (const candidate of candidates) {
+    try {
+      return await execFileAsync(candidate, [scriptPath, tempFilePath], {
+        windowsHide: true,
+        maxBuffer: 2_000_000
+      });
+    } catch (error) {
+      lastError = error;
+
+      const code = error?.code || "";
+      const message = error instanceof Error ? error.message : String(error);
+      const isMissingRuntime = code === "ENOENT" || /not found|enoent/i.test(message);
+
+      if (!isMissingRuntime) {
+        throw error;
+      }
+    }
+  }
+
+  throw new Error(
+    `Python runtime not found. Set PYTHON_PATH or install one of: ${candidates.join(", ")}.${lastError ? ` Last error: ${lastError.message}` : ""}`
+  );
+}
+
+function getPythonCandidates() {
+  const candidates = [];
+
+  if (configuredPython) {
+    candidates.push(configuredPython);
+  }
+
+  if (process.platform === "win32") {
+    candidates.push(bundledPython, "python", "py");
+  } else {
+    candidates.push("python3", "python");
+  }
+
+  return [...new Set(candidates.filter(Boolean))];
 }
 
 async function handleCvAnalyzeUploadRequest(req, res) {

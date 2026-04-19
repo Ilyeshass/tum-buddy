@@ -1,20 +1,23 @@
-# Use a more modern Node.js version (optional but recommended)
-FROM node:18-slim
+FROM node:20-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package configuration
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 python3-pip \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
 
-# Install production dependencies
-RUN npm install --only=production
+RUN npm install --omit=dev
 
-# Copy the rest of your application code
+COPY requirements.txt ./
+RUN pip3 install --no-cache-dir -r requirements.txt
+
 COPY . .
 
-# Cloud Run expects the app to listen on the PORT environment variable (default 8080)
+ENV PORT=8080
+ENV PYTHON_PATH=python3
+
 EXPOSE 8080
 
-# Command to run your application using ES modules
-CMD [ "node", "server.mjs" ]
+CMD ["node", "server.mjs"]
