@@ -11,7 +11,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, "public");
 const execFileAsync = promisify(execFile);
-const bundledPython = "C:\\Users\\firas\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe";
 const configuredPython = cleanString(process.env.PYTHON_PATH);
 
 loadEnv(path.join(__dirname, ".env"));
@@ -80,7 +79,9 @@ const server = http.createServer(async (req, res) => {
         ok: true,
         configured: Boolean(DIFY_API_KEY),
         mode: DIFY_APP_MODE,
-        baseUrl: DIFY_BASE_URL
+        baseUrl: DIFY_BASE_URL,
+        platform: process.platform,
+        pythonCandidates: getPythonCandidates()
       });
     }
 
@@ -440,7 +441,7 @@ function getPythonCandidates() {
   }
 
   if (process.platform === "win32") {
-    candidates.push(bundledPython, "python", "py");
+    candidates.push("py", "python");
   } else {
     candidates.push("python3", "python");
   }
