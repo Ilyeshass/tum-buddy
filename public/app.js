@@ -3,7 +3,8 @@ const submitButton = document.getElementById("submit-button");
 const statusText = document.getElementById("status-text");
 const resultCard = document.getElementById("result-card");
 const conversationField = document.getElementById("conversationId");
-const scoutButtons = document.querySelectorAll("[data-prefill]");
+const scoutButtons = document.querySelectorAll("[data-target], [data-prefill]");
+const navItems = document.querySelectorAll('.nav-item[href^="#"]');
 const subjectForm = document.getElementById("subject-form");
 const subjectSubmitButton = document.getElementById("subject-submit-button");
 const subjectStatusText = document.getElementById("subject-status-text");
@@ -15,6 +16,8 @@ const transportSummaryCopy = document.getElementById("transport-summary-copy");
 const transportLastChecked = document.getElementById("transport-last-checked");
 const transportNextCheck = document.getElementById("transport-next-check");
 const transportResultCard = document.getElementById("transport-result-card");
+const backToTopButton = document.getElementById("back-to-top");
+const mainShell = document.querySelector(".main-shell");
 const TRANSPORT_REFRESH_MS = 3 * 60 * 1000;
 
 const savedConversationId = sessionStorage.getItem("difyConversationId");
@@ -24,15 +27,62 @@ if (savedConversationId && !conversationField.value) {
 
 for (const button of scoutButtons) {
   button.addEventListener("click", () => {
-    form.interests.value = button.dataset.prefill || "";
-    document.getElementById("event-search").scrollIntoView({ behavior: "smooth", block: "start" });
-    form.interests.focus();
+    const targetId = button.dataset.target || "event-search";
+    const target = document.getElementById(targetId);
+
+    if (button.dataset.prefill) {
+      form.interests.value = button.dataset.prefill;
+    }
+
+    scrollSectionIntoView(target);
+
+    if (targetId === "event-search") {
+      form.interests.focus();
+      return;
+    }
+
+    if (targetId === "subject-guide") {
+      document.getElementById("subjectName")?.focus();
+      return;
+    }
+
+    if (targetId === "transport-detector") {
+      transportRefreshButton?.focus();
+    }
+  });
+}
+
+for (const navItem of navItems) {
+  navItem.addEventListener("click", event => {
+    const href = navItem.getAttribute("href") || "";
+    const target = href.startsWith("#") ? document.querySelector(href) : null;
+
+    if (!target) {
+      return;
+    }
+
+    event.preventDefault();
+    scrollSectionIntoView(target);
+    history.replaceState(null, "", href);
   });
 }
 
 transportRefreshButton?.addEventListener("click", () => {
   refreshTransportDetector(true);
 });
+
+backToTopButton?.addEventListener("click", () => {
+  if (mainShell && window.innerWidth > 900) {
+    mainShell.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+mainShell?.addEventListener("scroll", toggleBackToTopButton, { passive: true });
+window.addEventListener("scroll", toggleBackToTopButton, { passive: true });
+toggleBackToTopButton();
 
 refreshTransportDetector(false);
 setInterval(() => {
@@ -304,6 +354,29 @@ function formatRelativeFuture(date) {
   return `around ${formatTime(date)}`;
 }
 
+function toggleBackToTopButton() {
+  if (!backToTopButton) {
+    return;
+  }
+
+  const scrollTop = mainShell && window.innerWidth > 900 ? mainShell.scrollTop : window.scrollY;
+  backToTopButton.classList.toggle("visible", scrollTop > 320);
+}
+
+function scrollSectionIntoView(target) {
+  if (!target) {
+    return;
+  }
+
+  if (mainShell && window.innerWidth > 900) {
+    const top = target.offsetTop - 24;
+    mainShell.scrollTo({ top, behavior: "smooth" });
+    return;
+  }
+
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function setResult(html) {
   resultCard.classList.remove("empty");
   resultCard.innerHTML = html;
@@ -412,38 +485,16 @@ function parseSubjectTip(line) {
 }
 
 function renderEventCards(markdown) {
-  const text = String(markdown || "").trim();
-  if (!text) {
+  const parsed = parseEventCardsSource(markdown);
+  if (!parsed.events.length) {
     return "";
   }
 
-  const segments = text.split(/\n\s*(?=\d+\)\s+)/);
-  if (segments.length < 2) {
-    return "";
-  }
-
-  const overview = segments.shift()?.trim() || "";
-  const eventCards = [];
-  const notes = [];
-
-  for (const segment of segments) {
-    const event = parseEventSegment(segment.trim());
-    if (event) {
-      eventCards.push(event);
-    } else {
-      notes.push(segment.trim());
-    }
-  }
-
-  if (!eventCards.length) {
-    return "";
-  }
-
-  const overviewHtml = overview
-    ? `<section class="result-overview"><h3>Overview</h3><p>${renderInline(escapeHtml(cleanMarkdownDecorators(overview))).replace(/\n/g, "<br />")}</p></section>`
+  const overviewHtml = parsed.overview
+    ? `<section class="result-overview"><h3>Overview</h3><p>${renderInline(escapeHtml(cleanMarkdownDecorators(parsed.overview))).replace(/\n/g, "<br />")}</p></section>`
     : "";
 
-  const cardsHtml = eventCards.map((event, index) => {
+  const cardsHtml = parsed.events.map((event, index) => {
     const meta = [event.date, event.location, event.confidence].filter(Boolean)
       .map(item => `<span>${escapeHtml(cleanMarkdownDecorators(item))}</span>`)
       .join("");
@@ -482,8 +533,8 @@ function renderEventCards(markdown) {
     `;
   }).join("");
 
-  const notesHtml = notes.length
-    ? `<section class="result-notes"><h3>Notes</h3><p>${renderInline(escapeHtml(cleanMarkdownDecorators(notes.join("\n\n")))).replace(/\n/g, "<br />")}</p></section>`
+  const notesHtml = parsed.notes.length
+    ? `<section class="result-notes"><h3>Notes</h3><p>${renderInline(escapeHtml(cleanMarkdownDecorators(parsed.notes.join("\n\n")))).replace(/\n/g, "<br />")}</p></section>`
     : "";
 
   return `
@@ -493,6 +544,33 @@ function renderEventCards(markdown) {
       ${notesHtml}
     </div>
   `;
+}
+
+function parseEventCardsSource(markdown) {
+  const text = String(markdown || "").trim();
+  if (!text) {
+    return { overview: "", events: [], notes: [] };
+  }
+
+  const segments = text.split(/\n\s*(?=\d+\)\s+)/);
+  if (segments.length < 2) {
+    return { overview: "", events: [], notes: [] };
+  }
+
+  const overview = segments.shift()?.trim() || "";
+  const events = [];
+  const notes = [];
+
+  for (const segment of segments) {
+    const event = parseEventSegment(segment.trim());
+    if (event) {
+      events.push(event);
+    } else {
+      notes.push(segment.trim());
+    }
+  }
+
+  return { overview, events, notes };
 }
 
 function parseEventSegment(segment) {
