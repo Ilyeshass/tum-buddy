@@ -26,7 +26,6 @@
         <nav class="nav-section">
           <p class="nav-label">Main Menu</p>
           <a class="nav-item active" href="#dashboard">Dashboard</a>
-          <a class="nav-item" href="#event-search">Event Scout</a>
           <a class="nav-item external" href="https://campus.tum.de/tumonline/" target="_blank" rel="noreferrer">
             TUMonline
           </a>
@@ -38,13 +37,16 @@
         <nav class="nav-section">
           <p class="nav-label">Autonomous Agents</p>
           <a class="nav-item" href="#weekly-scout">
-            Weekly Scout
+            Event Scout
           </a>
           <a class="nav-item" href="#subject-guide">
             Subject Guide
           </a>
           <a class="nav-item" href="#transport-detector">
             Transport Detector
+          </a>
+          <a class="nav-item" href="#career-scout">
+            Career Scout
           </a>
         </nav>
 
@@ -168,6 +170,28 @@
                 data-target="transport-detector"
               >
                 Open Transport Detector
+              </button>
+            </article>
+
+            <article class="panel scout-panel" id="career-shortcut">
+              <div class="panel-header">
+                <h2>Career Scout</h2>
+                <p>Student-job matching across TUM chairs, HiWi listings, and external career pages.</p>
+              </div>
+              <div class="scout-tags">
+                <span>HiWi</span>
+                <span>Career Match</span>
+                <span>TUM Chairs</span>
+              </div>
+              <p class="scout-copy">
+                Use your skills and interests to score job opportunities that fit your background.
+              </p>
+              <button
+                class="scout-action"
+                type="button"
+                data-target="career-scout"
+              >
+                Open Career Scout
               </button>
             </article>
           </section>
@@ -307,6 +331,121 @@
               <div id="subject-result-card" class="result-card empty">
                 <p class="placeholder">
                   Subject Guide will turn a course name and degree into practical advice you can use right away.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel search-panel career-panel" id="career-scout">
+            <div class="panel-header split">
+              <div>
+                <h2>Career Scout</h2>
+                <p>Match your profile with jobs from TUM HiWi pages, selected chairs, and student-career sources.</p>
+              </div>
+              <div class="status-pill" id="career-status-text">Ready to scan jobs.</div>
+            </div>
+
+            <div class="search-layout">
+              <form id="career-form" class="search-form">
+                <label>
+                  Upload CV (PDF)
+                  <input
+                    id="careerCvFile"
+                    name="careerCvFile"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                  />
+                </label>
+
+                <button type="button" id="career-cv-analyze-button">Analyze CV</button>
+
+                <label>
+                  Degree
+                  <input
+                    id="careerDegree"
+                    name="degree"
+                    type="text"
+                    placeholder="B.Sc. Informatics"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Skills
+                  <textarea
+                    id="careerSkills"
+                    name="skills"
+                    rows="4"
+                    placeholder="Python, machine learning, backend, SQL, JavaScript"
+                    required
+                  ></textarea>
+                </label>
+
+                <label>
+                  Interests
+                  <textarea
+                    id="careerInterests"
+                    name="interests"
+                    rows="3"
+                    placeholder="AI, data science, software engineering, security"
+                  ></textarea>
+                </label>
+
+                <div class="field-grid">
+                  <label>
+                    Preferred Types
+                    <input
+                      id="careerTypes"
+                      name="preferredTypes"
+                      type="text"
+                      placeholder="job, research, working student"
+                    />
+                  </label>
+
+                  <label>
+                    Preferred Locations
+                    <input
+                      id="careerLocations"
+                      name="preferredLocations"
+                      type="text"
+                      placeholder="Munich, remote"
+                    />
+                  </label>
+                </div>
+
+                <div class="field-grid">
+                  <label>
+                    Preferred Languages
+                    <input
+                      id="careerLanguages"
+                      name="preferredLanguages"
+                      type="text"
+                      placeholder="English, German"
+                    />
+                  </label>
+
+                  <label>
+                    Max Results
+                    <input id="careerLimit" name="limit" type="number" min="3" max="12" value="6" />
+                  </label>
+                </div>
+
+                <label>
+                  CV Summary Or Extra Notes
+                  <textarea
+                    id="careerSummary"
+                    name="summary"
+                    rows="5"
+                    placeholder="Optional profile summary, projects, coursework, or the kind of roles you want."
+                  ></textarea>
+                </label>
+
+                <button type="submit" id="career-submit-button">Find Matching Jobs</button>
+              </form>
+
+              <div id="career-result-card" class="result-card empty">
+                <p class="placeholder">
+                  Career Scout will rank jobs against your profile and explain why each role fits.
                 </p>
               </div>
             </div>
